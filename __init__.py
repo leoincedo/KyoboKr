@@ -278,10 +278,14 @@ class Worker(Thread):  # {{{
             mi.authors.append(o)
 
         elem = xhtml.xpath('//tr[th[.="ISBN"]]/td/text()')
+        if len(elem) == 0 :
+            elem = xhtml.xpath('//*[@class="prod_pordInfo_box indent"]/dd[2]/em/text()')
+
         if len(elem) > 0:
             isbn = elem[0] 
             mi.set_identifier('isbn', isbn )
             mi.isbn = isbn
+
 
         mi.comments = desc
         mi.publisher = publisher
@@ -523,7 +527,7 @@ class KyoboKr(Source):
         elif 'kyobobook.co.kr' in identifiers:
             items = [dict(kyobo=identifiers['kyobobook.co.kr'])]
         else:
-            print('hey', title)
+            log.info('hey', title)
             query = self.create_query(log, title=title, authors=authors,
                                       identifiers=identifiers)
             if not query:
@@ -771,8 +775,8 @@ if __name__ == '__main__':
         #     ]
         # ),
         (  # A book with an aladin id
-            {'identifiers':{}, 'title':'바람과 함께 사라지다(하)'},
-            [title_test('Re: 제로부터 시작하는 이세계 생활 3', exact=False)]
+            {'identifiers':{}, 'title':'귀멸의칼날'},
+            [title_test('귀멸의칼날', exact=False)]
         ),
         # (  # A book with an aladin id
         #     {'identifiers': {'aladin': '208556'}},
