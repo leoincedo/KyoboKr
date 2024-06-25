@@ -261,13 +261,13 @@ class Worker(Thread):  # {{{
             subCtgrName = xhtml.xpath('//input[@id="subCtgrName"]/@value')
             
             strs = dsvn + largeCtgrName + middleCtgrName + subCtgrName
+            strs = [o for o in strs if o and len(o)>0]
             print("sts : ", strs)
-            strs = [o for o in strs if o ]
 
-            categories = [", ".join(strs)]
+            categories = strs
 
 
-        print('categories: ', elems)
+        print('categories: ', categories)
         
 
         
