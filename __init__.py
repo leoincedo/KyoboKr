@@ -108,6 +108,7 @@ class Worker(Thread):  # {{{
         self.daemon = True
         self.br, self.log, self.timeout = br, log, timeout
         self.result_queue, self.plugin, self.kyobo = result_queue, plugin, basic_data['kyobo']
+        self.basic_rating = basic_data['rating']
         self.relevance = relevance
 
     def run(self):
@@ -247,13 +248,33 @@ class Worker(Thread):  # {{{
         cleaned_str = pubdate.replace('\n', '').replace(' ', '')
         pubdate = cleaned_str.split('출간')[0]
 
-        print('pubdate:', pubdate)
+        print('pubdate @:', title, pubdate)
         elems = xhtml.xpath("//li[@class='category_list_item']//text()")
         categories = [s.strip() for s in elems]
         filtered_list = [item for item in categories if item != '' and item != '>']
         categories = list(dict.fromkeys(filtered_list))
+        
+        if len(elems) <= 0: 
+            dsvn = xhtml.xpath('//input[@id="dgctSaleCmdtDvsnName"]/@value')
+            largeCtgrName = xhtml.xpath('//input[@id="largeCtgrName"]/@value')
+            middleCtgrName = xhtml.xpath('//input[@id="middleCtgrName"]/@value')
+            subCtgrName = xhtml.xpath('//input[@id="subCtgrName"]/@value')
+            
+            strs = dsvn + largeCtgrName + middleCtgrName + subCtgrName
+            print("sts : ", strs)
+            strs = [o for o in strs if o ]
+
+            categories = [", ".join(strs)]
+
+
+        print('categories: ', elems)
+        
+
+        
         desc = ""        
+        
         elems = xhtml.xpath("//div[@class='intro_bottom']//div[@class='info_text']/text()")
+
         if len(elems) > 0 :
             desc = " ".join(elems)
 
@@ -263,6 +284,8 @@ class Worker(Thread):  # {{{
 
         if len(elems) > 0:
             rating = elems[0]
+        else:
+            rating = self.basic_rating
 
         print('rating : ', rating)
 
@@ -346,7 +369,7 @@ class Worker(Thread):  # {{{
 class KyoboKr(Source):
     name = 'KyoboKr'
     author = 'leoincedo'
-    version = (1, 0, 4)
+    version = (1, 0, 5)
     minimum_calibre_version = (3, 6, 0)
     description = _('교보에서 책 정보와 표지 다운로드 - AladinKr Project 참조')
 
@@ -482,11 +505,14 @@ class KyoboKr(Source):
             #print(prod_item.text)
             title = prod_item.xpath(".//span[contains(@id, 'cmdtName')]")
             hrefs = prod_item.xpath('.//a/@href')
+            rating = prod_item.xpath('//span[@class="review_klover_text font_size_xxs"]/text()')
+
             item = {}
 
             item['title'] = title[0].text
             item['url'] = hrefs[0]
             item['score'] = 0
+            item['rating'] = float(rating[0]) if len(rating) > 0 else [0]
             item['itemId'] = getItemID( hrefs[0] )
 
             answer_bytes = bytes(keyword, 'utf-8')
@@ -504,7 +530,7 @@ class KyoboKr(Source):
         log.info('sorted : ',sorted_books)
 
 
-        return [dict(kyobo=x['itemId']) for x in sorted_books]
+        return [dict(kyobo=x['itemId'], rating=x['rating']) for x in sorted_books]
         
 
     def identify(self, log, result_queue, abort, title=None, authors=None,  # {{{
@@ -775,8 +801,8 @@ if __name__ == '__main__':
         #     ]
         # ),
         (  # A book with an aladin id
-            {'identifiers':{}, 'title':'귀멸의칼날'},
-            [title_test('귀멸의칼날', exact=False)]
+            {'identifiers':{}, 'title':'귀멸의칼날 23'},
+            [title_test('귀멸의칼날 23', exact=False)]
         ),
         # (  # A book with an aladin id
         #     {'identifiers': {'aladin': '208556'}},
