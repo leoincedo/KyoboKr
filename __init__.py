@@ -108,8 +108,10 @@ class Worker(Thread):  # {{{
         self.daemon = True
         self.br, self.log, self.timeout = br, log, timeout
         self.result_queue, self.plugin, self.kyobo = result_queue, plugin, basic_data['kyobo']
-        self.basic_rating = basic_data['rating']
+        self.basic_rating = 0
         self.relevance = relevance
+        if 'rating' in basic_data:
+            self.basic_rating = basic_data['rating'] 
 
     def run(self):
         url = "https://product.kyobobook.co.kr/detail/{}".format(self.kyobo)
@@ -369,7 +371,7 @@ class Worker(Thread):  # {{{
 class KyoboKr(Source):
     name = 'KyoboKr'
     author = 'leoincedo'
-    version = (1, 0, 5)
+    version = (1, 0, 6)
     minimum_calibre_version = (3, 6, 0)
     description = _('교보에서 책 정보와 표지 다운로드 - AladinKr Project 참조')
 
@@ -642,11 +644,16 @@ class KyoboKr(Source):
             input_string = input_bytes
             if ":" in item.title:
                 input_string = str(input_bytes).split(':')[0]
-            check_len = len(answer_bytes) + 3
 
-            sm = difflib.SequenceMatcher(None, answer_bytes, input_string[:check_len], autojunk=False)
-            similar = sm.ratio()
-            item.source_relevance = similar  * 100
+            similar = 0
+
+            if title != None:
+                check_len = len(answer_bytes) + 3
+
+                sm = difflib.SequenceMatcher(None, answer_bytes, input_string[:check_len], autojunk=False)
+                similar = sm.ratio()
+                item.source_relevance = similar  * 100
+                
             items.append({'item':item, 'score': similar * 100})
             #self.log('ITEM SCORE : ', item.title, item.source_relevance )
 
